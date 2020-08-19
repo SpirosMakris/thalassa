@@ -8,7 +8,7 @@ fn main() {
 
     App::build()
         .add_default_plugins()
-        
+
         // Startup
         .add_startup_system(ss_add_camera_and_lights.system())
 
@@ -16,6 +16,7 @@ fn main() {
 
         // Plugins
         .add_plugin(plugins::PlayerPlugin)
+        .add_plugin(plugins::DiagnosticsUIPlugin)
         .run();
 }
 
