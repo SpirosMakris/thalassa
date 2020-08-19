@@ -9,7 +9,7 @@ fn main() {
     App::build()
         .add_default_plugins()
         // Startup
-        .add_startup_system(hello_world_system.system())
+        
         .add_startup_system(ss_add_player.system())
         .add_startup_system(ss_add_camera_and_lights.system())
         // .add_startup_system(ss_player_state.system())
@@ -17,12 +17,10 @@ fn main() {
         // Systems
         .add_system(s_keyboard_input_system.system())
         .add_system(s_update_player.system())
+        .add_system(s_rotator.system())
         .run();
 }
 
-fn hello_world_system() {
-    println!("Hello world!");
-}
 
 fn ss_add_player(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>) {
     let cube_handle = meshes.add(Mesh::from(shape::Cube { size: 1.0 }));
@@ -39,6 +37,7 @@ fn ss_add_player(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut m
             ..Default::default()
         })
         .with(Player)
+        .with(Rotator)
         .with(Position { x: 0.0, y: 0.0 });
 }
 
@@ -95,6 +94,12 @@ fn s_update_player(player_motion: Res<PlayerMotion>, mut query: Query<(&Player, 
     }
 }
 
+fn s_rotator(time: Res<Time>, mut query: Query<(&Rotator, &mut Rotation)>) {
+    for (_rotator, mut rotation) in &mut query.iter() {
+        rotation.0 = rotation.0 * Quat::from_rotation_y(6.0 * time.delta_seconds);
+    }
+}
+
 
 // Resources
 #[derive(Default)]
@@ -112,4 +117,8 @@ struct Position {
 
 struct Player;
 
+struct Rotator;
+
 // @TODO: Add a `Renderable` component(whatever this translates to in Bevy)
+
+// Plugins
