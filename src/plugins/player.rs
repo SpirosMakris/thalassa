@@ -1,23 +1,20 @@
-
 use bevy::{
     input::{keyboard::KeyCode, Input},
     prelude::*,
 };
 
-
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app
-            .add_resource(PlayerMotion {
-                right_axis: 0.0,
-                up_axis: 0.0,
-            })
-            .add_startup_system(ss_add_player.system())
-            .add_system(s_keyboard_input_system.system())
-            .add_system(s_update_player.system())
-            .add_system(s_rotator.system());
+        app.add_resource(PlayerMotion {
+            right_axis: 0.0,
+            up_axis: 0.0,
+        })
+        .add_startup_system(ss_add_player.system())
+        .add_system(s_keyboard_input_system.system())
+        .add_system(s_update_player.system())
+        .add_system(s_rotator.system());
     }
 }
 
@@ -61,7 +58,6 @@ fn s_rotator(time: Res<Time>, mut query: Query<(&Rotator, &mut Rotation)>) {
     }
 }
 
-
 pub struct PlayerMotion {
     right_axis: f32,
     up_axis: f32,
@@ -97,8 +93,6 @@ fn s_keyboard_input_system(
     }
 }
 
-
-
 fn s_update_player(
     player_motion: Res<PlayerMotion>,
     mut query: Query<(&Player, &mut Translation)>,
@@ -107,6 +101,3 @@ fn s_update_player(
         translation.0 += Vec3::new(player_motion.right_axis, 0.0, player_motion.up_axis);
     }
 }
-
-
-

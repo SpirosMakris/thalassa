@@ -1,23 +1,21 @@
 use bevy::{
+    diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
     prelude::*,
-    diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin}
 };
 
 pub struct DiagnosticsUIPlugin;
 
 impl Plugin for DiagnosticsUIPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app
-            .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        app.add_plugin(FrameTimeDiagnosticsPlugin::default())
             .add_startup_system(ss_setup_diagnostics_ui.system())
             .add_system(s_update_diagnostics_ui.system());
     }
 }
 
 fn ss_setup_diagnostics_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font_handle = asset_server.load("assets/fonts/FiraSans-Bold.ttf")
-        .unwrap();
-    
+    let font_handle = asset_server.load("assets/fonts/FiraSans-Bold.ttf").unwrap();
+
     commands
         // UI camera
         .spawn(UiCameraComponents::default())
