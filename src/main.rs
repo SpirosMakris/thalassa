@@ -14,6 +14,7 @@ fn main() {
         .add_plugin(plugins::PlayerPlugin)
         .add_plugin(plugins::DiagnosticsUIPlugin)
         .add_plugin(plugins::MainCameraPlugin)
+        .add_plugin(plugins::TerrainPlugin)
         .run();
 }
 
