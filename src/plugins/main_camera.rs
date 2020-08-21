@@ -1,7 +1,7 @@
 use bevy::{
     prelude::*,
     render::camera::{Camera, PerspectiveProjection, VisibleEntities},
-    render::render_graph::base
+    render::render_graph::base,
 };
 
 const CAMERA_SPEED: f32 = 1000.0;
@@ -16,15 +16,21 @@ pub struct MainCameraOptions {
     pub pitch: f32,
     /// Camera current yaw. Enforced by MainCameraPlugin motion system
     pub yaw: f32,
+    /// A target for the camera to look at
+    pub target: Vec3,
+    /// Look at rotation Mat4
+    look_at_mat: Mat4,
 }
 
 impl Default for MainCameraOptions {
     fn default() -> Self {
         Self {
-            speed: 20.0,
+            speed: 50.0,
             sensitivity: 3.0,
             pitch: 0.0,
             yaw: 0.0,
+            target: Vec3::new(0.0, 0.0, 0.0),
+            look_at_mat: Mat4::identity(),
         }
     }
 }
@@ -62,27 +68,31 @@ impl Default for MainCamera {
     }
 }
 
+#[derive(Default)]
+struct MouseState {
+    // mouse_wheel
+}
 
 pub struct MainCameraPlugin;
 
 impl Plugin for MainCameraPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app
-            .add_startup_system(ss_setup_main_camera.system())
+        app.add_startup_system(ss_setup_main_camera.system())
             .add_system(s_camera_movement.system());
     }
 }
 
 fn _________ss_setup_main_camera(mut commands: Commands) {
-    commands.spawn(Camera3dComponents {
-        transform: Transform::new_sync_disabled(Mat4::face_toward(
-            Vec3::new(50.0, 100.0, 100.0),
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(0.0, 1.0, 0.0),
-        )),
-        ..Default::default()
-    })
-    .with(MainCamera::default());
+    commands
+        .spawn(Camera3dComponents {
+            transform: Transform::new_sync_disabled(Mat4::face_toward(
+                Vec3::new(50.0, 100.0, 100.0),
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+            )),
+            ..Default::default()
+        })
+        .with(MainCamera::default());
 }
 
 fn ss_setup_main_camera(mut commands: Commands) {
@@ -96,7 +106,7 @@ fn ss_setup_main_camera(mut commands: Commands) {
 fn s_camera_movement(
     time: Res<Time>,
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&MainCameraOptions, &mut Translation, &Rotation)>
+    mut query: Query<(&mut MainCameraOptions, &mut Translation, &mut Rotation)>,
 ) {
     let axis_h = movement_axis(&keyboard_input, KeyCode::Left, KeyCode::Right);
     let axis_v = movement_axis(&keyboard_input, KeyCode::Up, KeyCode::Down);
@@ -104,33 +114,29 @@ fn s_camera_movement(
 
     let axis_elev = movement_axis(&keyboard_input, KeyCode::PageUp, KeyCode::PageDown);
 
-    for (options, mut translation, rotation) in &mut query.iter() {
-        let delta_forw = flat_forward_vector(rotation)
-            * axis_v
-            * options.speed
-            * time.delta_seconds;
-        
-        let delta_strafe = flat_strafe_vector(rotation)
-            * axis_h
-            * options.speed
-            * time.delta_seconds;
-        
-        let delta_elev = Vec3::unit_y()
-            * axis_elev
-            * options.speed
-            * time.delta_seconds;
-            
-        
+    for (mut options, mut translation, mut rotation) in &mut query.iter() {
+        let delta_forw =
+            flat_forward_vector(&*rotation) * axis_v * options.speed * time.delta_seconds;
+
+        let delta_strafe =
+            flat_strafe_vector(&*rotation) * axis_h * options.speed * time.delta_seconds;
+
+        let delta_elev = Vec3::unit_y() * axis_elev * options.speed * time.delta_seconds;
+
         translation.0 += delta_forw + delta_strafe + delta_elev;
         // println!("{:?}", translation.0);
+
+        // Look at target
+        options.look_at_mat =
+            Mat4::face_toward(translation.0, options.target, Vec3::new(0.0, 1.0, 0.0));
+
+        rotation.0 = Quat::from_rotation_mat4(&options.look_at_mat);
     }
 }
 
-fn movement_axis(
-    input: &Res<Input<KeyCode>>,
-    axis_pos_key: KeyCode,
-    axis_neg_key: KeyCode
-) -> f32 {
+fn target_follow_player() {}
+
+fn movement_axis(input: &Res<Input<KeyCode>>, axis_pos_key: KeyCode, axis_neg_key: KeyCode) -> f32 {
     let mut axis = 0.0;
 
     if input.pressed(axis_pos_key) {
@@ -168,7 +174,7 @@ fn flat_strafe_vector(rotation: &Rotation) -> Vec3 {
 fn _______s_camera_movement(
     time: Res<Time>,
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&MainCamera, &Camera, &mut Translation)>
+    mut query: Query<(&MainCamera, &Camera, &mut Translation)>,
 ) {
     for (_, _, mut translation) in &mut query.iter() {
         let mut direction = Vec3::zero();
