@@ -2,6 +2,9 @@ use bevy::prelude::*;
 
 mod plugins;
 
+mod types;
+pub use types::*;
+
 fn main() {
     println!("Starting up");
 
