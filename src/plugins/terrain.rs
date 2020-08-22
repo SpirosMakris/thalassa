@@ -121,7 +121,7 @@ pub struct TerrainPlugin;
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system(ss_setup_terrain.system())
-            .add_startup_system(ss_test_chunking.system());
+            .add_startup_system(ss_test_chunking.thread_local_system());
     }
 }
 
@@ -148,7 +148,7 @@ fn ss_setup_terrain(
     });
 }
 
-fn ss_test_chunking(resources: &mut Resources) {
+fn ss_test_chunking(_world: &mut World, resources: &mut Resources) {
     let chunky = new_chunk_tiles();
     println!("CHUNKY: {:?}", chunky);
     println!("CHUNKY len = {}", chunky.len());
